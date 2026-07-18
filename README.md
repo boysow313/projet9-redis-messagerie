@@ -17,7 +17,7 @@ projet9-redis-messagerie/
 │   ├── config.py           # Configuration de connexion Redis
 │   ├── messagerie.py       # Fonctions de gestion des files de messages
 │   ├── main.py             # Interface console interactive
-│   └── simulate.py         # Simulation automatique d'échanges
+│   └── simulation.py         # Simulation automatique d'échanges
 ├── docker-compose.yml
 ├── requirements.txt
 └── README.md
