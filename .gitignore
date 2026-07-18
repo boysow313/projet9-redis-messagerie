@@ -1,3 +1,10 @@
-# Byte-compiled / optimized / DLL files
+# Fichiers Python temporaires
 __pycache__/
-venv
+*.pyc
+
+# Environnements virtuels
+venv/
+.env
+
+# Fichiers compilés / DLL
+*.dll

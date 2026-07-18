@@ -5,15 +5,13 @@ r = get_connection()
 
 
 def generer_id_message():
-    """Genere un identifiant unique base sur le timestamp."""
+    #Genere un identifiant unique base sur le timestamp.
     return f"msg_{int(time.time() * 1000)}"
 
 
 def envoyer_message(expediteur, destinataire, contenu):
-    """
-    Envoie un message d'un utilisateur a un autre.
-    Le message est ajoute en tete de la file du destinataire (LPUSH).
-    """
+    #Envoie un message d'un utilisateur a un autre.Le message est ajoute en tete de la file du destinataire (LPUSH).
+    
     msg_id = generer_id_message()
     message = f"{msg_id}|{expediteur}|{int(time.time())}|{contenu}"
 
@@ -28,11 +26,6 @@ def envoyer_message(expediteur, destinataire, contenu):
 
 
 def lire_messages(utilisateur, supprimer=False):
-    """
-    Lit tous les messages de la file d'un utilisateur.
-    Si supprimer=True, les messages sont retires (RPOP).
-    Sinon, consultation sans suppression (LRANGE).
-    """
     cle_file = f"queue:{utilisateur}"
     messages = []
 
@@ -51,7 +44,7 @@ def lire_messages(utilisateur, supprimer=False):
 
 
 def lire_message_suivant(utilisateur):
-    """Lit et retire le message le plus ancien (FIFO via RPOP)."""
+    #Lit et retire le message le plus ancien (FIFO via RPOP).
     cle_file = f"queue:{utilisateur}"
     msg = r.rpop(cle_file)
     if msg is None:
@@ -60,13 +53,13 @@ def lire_message_suivant(utilisateur):
 
 
 def compter_messages(utilisateur):
-    """Retourne le nombre de messages en attente."""
+    #nombre de messages en attente.
     cle_file = f"queue:{utilisateur}"
     return r.llen(cle_file)
 
 
 def vider_file(utilisateur):
-    """Supprime tous les messages de la file."""
+    #Supprime tous les messages de la file.
     cle_file = f"queue:{utilisateur}"
     count = r.llen(cle_file)
     r.delete(cle_file)
@@ -74,26 +67,26 @@ def vider_file(utilisateur):
 
 
 def definir_expiration(utilisateur, duree_secondes):
-    """Definit un TTL sur la file de messages."""
+    #Definit un TTL sur la file de messages.
     cle_file = f"queue:{utilisateur}"
     r.expire(cle_file, duree_secondes)
     return duree_secondes
 
 
 def obtenir_ttl(utilisateur):
-    """Retourne le TTL restant (-1 si pas de TTL, -2 si inexistante)."""
+    #Retourne le TTL restant (-1 si pas de TTL, -2 si inexistante)
     cle_file = f"queue:{utilisateur}"
     return r.ttl(cle_file)
 
 
 def lister_utilisateurs():
-    """Liste tous les utilisateurs ayant une file active."""
+    #Liste tous les utilisateurs ayant une file active.
     cles = r.keys("queue:*")
     return [cle.replace("queue:", "") for cle in cles]
 
 
 def obtenir_statistiques():
-    """Retourne les statistiques globales."""
+    #Retourne les statistiques globales.
     total = r.get("stats:total_messages") or "0"
     utilisateurs = lister_utilisateurs()
 
@@ -111,23 +104,8 @@ def obtenir_statistiques():
 
     return stats
 
-
-def rechercher_messages(utilisateur, mot_cle):
-    """Recherche les messages contenant un mot-cle."""
-    cle_file = f"queue:{utilisateur}"
-    raw_messages = r.lrange(cle_file, 0, -1)
-    resultats = []
-
-    for msg in raw_messages:
-        parsed = _parser_message(msg)
-        if mot_cle.lower() in parsed["contenu"].lower():
-            resultats.append(parsed)
-
-    return resultats
-
-
 def _parser_message(raw):
-    """Parse un message brut en dictionnaire."""
+    #cette partie parse un message brut en dictionnaire.
     parties = raw.split("|", 3)
     return {
         "id": parties[0],

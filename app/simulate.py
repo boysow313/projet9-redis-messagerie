@@ -1,7 +1,4 @@
-"""
-Script de simulation d'echanges de messages entre utilisateurs.
-Genere des conversations realistes pour tester le systeme.
-"""
+#Script pour simuler des echanges de messages entre utilisateurs.
 
 import sys
 import os
@@ -29,31 +26,29 @@ MESSAGES = [
     "Salut, comment ca va ?",
     "Tu es disponible pour une reunion demain ?",
     "J'ai termine le rapport, je te l'envoie.",
-    "Merci pour ton aide !",
-    "On se retrouve a la cafeteria a midi ?",
+    "Merci pour ton aide!",
+    "On se retrouve a l'ufr a 20h ?",
     "As-tu recu mon dernier mail ?",
     "Le projet avance bien, on est dans les temps.",
     "Peux-tu relire mon code avant le merge ?",
     "Bonne idee, je suis d'accord.",
-    "N'oublie pas la deadline de vendredi.",
+    "N'oublie pas la deadline de lundi.",
     "Je serai en retard ce matin.",
-    "Le serveur est down, tu peux verifier ?",
-    "Super travail sur la presentation !",
+    "Le serveur est down, tu peux verifier?",
+    "Super travail sur la presentation!",
     "On fait un point a 15h ?",
     "J'ai un bug bizarre, tu peux m'aider ?",
     "Le client a valide la maquette.",
-    "Je prends ma pause, a tout de suite.",
-    "Tu as vu le nouveau framework ?",
-    "La base de donnees est restauree.",
-    "Reunion d'equipe reportee a jeudi.",
+    "Je prends un pause, a tout de suite.",
+    "Tu as vu le nouveau framework?",
+    "La base de donnee est restauree.",
+    "Reunion d'equipe reporte a jeudi.",
 ]
 
 
 def simulation_envois(nb_messages=20):
-    """Simule l'envoi de messages entre utilisateurs."""
-    print("\n" + "=" * 60)
+    #Simule l'envoi de messages entre utilisateurs
     print("  SIMULATION - Envoi de messages")
-    print("=" * 60)
 
     for i in range(nb_messages):
         expediteur = random.choice(UTILISATEURS)
@@ -68,10 +63,8 @@ def simulation_envois(nb_messages=20):
 
 
 def simulation_lecture():
-    """Simule la lecture des messages par chaque utilisateur."""
-    print("\n" + "=" * 60)
+    #Simule la lecture des messages par chaque utilisateur
     print("  SIMULATION - Lecture des messages")
-    print("=" * 60)
 
     for user in UTILISATEURS:
         nb = compter_messages(user)
@@ -87,10 +80,8 @@ def simulation_lecture():
 
 
 def simulation_fifo():
-    """Demonstre le comportement FIFO de la file."""
-    print("\n" + "=" * 60)
+    #Demontre le comportement FIFO de la file.
     print("  SIMULATION - Demonstration FIFO")
-    print("=" * 60)
 
     vider_file("test_fifo")
 
@@ -111,10 +102,7 @@ def simulation_fifo():
 
 
 def simulation_ttl():
-    """Demonstre l'expiration automatique des messages."""
-    print("\n" + "=" * 60)
     print("  SIMULATION - Demonstration TTL (expiration)")
-    print("=" * 60)
 
     vider_file("test_ttl")
     envoyer_message("systeme", "test_ttl", "Ce message expirera dans 10 secondes")
@@ -141,10 +129,7 @@ def simulation_ttl():
 
 
 def simulation_performances():
-    """Mesure les performances d'envoi et de lecture."""
-    print("\n" + "=" * 60)
     print("  SIMULATION - Mesure des performances")
-    print("=" * 60)
 
     vider_file("test_perf")
     NB_MESSAGES = 1000
@@ -178,10 +163,7 @@ def simulation_performances():
 
 
 def afficher_statistiques():
-    """Affiche les statistiques globales."""
-    print("\n" + "=" * 60)
     print("  STATISTIQUES GLOBALES")
-    print("=" * 60)
 
     stats = obtenir_statistiques()
     print(f"\n  Total messages envoyes : {stats['total_messages_envoyes']}")
@@ -195,17 +177,14 @@ def afficher_statistiques():
 
 
 def reinitialiser():
-    """Remet a zero toutes les files et statistiques."""
     conn = get_connection()
     conn.flushdb()
     print("\n  Base Redis reinitalisee (FLUSHDB).")
 
 
 def main():
-    print("\n" + "*" * 60)
     print("  SIMULATEUR DE MESSAGERIE REDIS")
-    print("*" * 60)
-
+    
     while True:
         print("\n  1. Envoyer des messages aleatoires (20 messages)")
         print("  2. Lire les messages de chaque utilisateur")

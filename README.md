@@ -82,12 +82,18 @@ docker exec -it redis-messagerie redis-cli
 ```
 
 ```redis
-KEYS queue:*              -- Voir les files actives
-LRANGE queue:alice 0 -1   -- Contenu d'une file
-LLEN queue:bob            -- Nombre de messages
-TTL queue:test_ttl        -- TTL restant
-INFO memory               -- Utilisation mémoire
-MONITOR                   -- Commandes en temps réel
+KEYS queue:*                -- Voir les files actives
+LRANGE queue:mamadou 0 -1   -- Contenu de la file de Mamadou
+LRANGE queue:ldji 0 -1      -- Contenu de la file de Ldji
+LRANGE queue:momar 0 -1     -- Contenu de la file de Momar
+LLEN queue:mamadou          -- Nombre de messages de Mamadou
+LLEN queue:ldji             -- Nombre de messages de Ldji
+LLEN queue:momar            -- Nombre de messages de Momar
+TTL queue:test_ttl          -- TTL restant
+INFO memory                 -- Utilisation mémoire
+INFO keyspace               -- Info sur les bases
+DBSIZE                      -- Nombre total de clés
+MONITOR                     -- Commandes en temps réel
 ```
 
 ## Persistance
