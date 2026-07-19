@@ -1,0 +1,560 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{caption}
+
+\geometry{top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!70!black,
+    urlcolor=blue!70!black,
+    citecolor=blue!70!black
+}
+
+\definecolor{codebg}{rgb}{0.95,0.95,0.95}
+\definecolor{codeframe}{rgb}{0.7,0.7,0.7}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    backgroundcolor=\color{codebg},
+    frame=single,
+    rulecolor=\color{codeframe},
+    breaklines=true,
+    showstringspaces=false,
+    tabsize=2,
+    captionpos=b
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{IPSL -- GeIT1, Base de Donn\'ees NoSQL}}
+\fancyhead[R]{\small\textit{Mamadou Sow, El Hadji Ndao}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+\graphicspath{{images/}}
+
+\begin{document}
+
+% ===================== PAGE DE GARDE =====================
+\begin{titlepage}
+\thispagestyle{empty}
+\begin{center}
+
+\vspace*{1.5cm}
+
+Universit\'e Gaston Berger de Saint-Louis\\[0.3cm]
+\textbf{\textit{Institut Polytechnique de Saint-Louis}}\\[0.3cm]
+Ann\'ee Universitaire 2025/2026
+
+\vspace{1cm}
+\noindent\rule{\textwidth}{0.5pt}
+
+\begin{flushleft}
+\textbf{Fili\`ere :} GeIT1 -- IPSL\\
+\textbf{Mati\`ere :} Base de Donn\'ees NoSQL\\
+\textbf{Semestre :} 2\\
+\textbf{Fait le :} 18 Juillet 2026
+\end{flushleft}
+\begin{flushright}
+\vspace{-2.5cm}
+\textbf{Professeur :} \textit{Dr. Pape Samour Diop}\\
+\textbf{\'Etudiants :} \textit{Mamadou Sow}\\
+\phantom{\textbf{\'Etudiants :}} \textit{El Hadji Ndao}
+\end{flushright}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\vspace{3cm}
+
+{\LARGE \textbf{Rapport de Projet}}
+
+\vspace{1cm}
+
+{\Huge \color{blue!70!black} Syst\`eme de Gestion de Files d'Attente}
+
+\vspace{0.3cm}
+{\large avec}
+\vspace{0.3cm}
+
+{\Huge \color{blue!70!black} Redis}
+
+\vspace{0.5cm}
+
+{\large Application de Messagerie (Python/Docker)}
+
+\vspace{4cm}
+
+{\large\color{blue!50!black}\textit{<< Premier arriv\'e, premier lu. >>}}
+
+\end{center}
+\end{titlepage}
+
+% ===================== TABLE DES MATIERES =====================
+\newpage
+\tableofcontents
+\newpage
+
+% ===================== 1. INTRODUCTION =====================
+\section{Introduction}
+
+\subsection{Objectif du projet}
+
+Ce projet consiste \`a d\'evelopper un syst\`eme de messagerie instantan\'ee o\`u Redis est utilis\'e pour g\'erer les files d'attente de messages entre utilisateurs. Chaque utilisateur poss\`ede une file de messages (liste Redis) qu'il peut consulter, vider ou enrichir.
+
+L'objectif g\'en\'eral est d'utiliser Redis pour g\'erer des files d'attente de mani\`ere rapide et efficace dans une application temps r\'eel.
+
+\subsection{Objectifs sp\'ecifiques}
+
+\begin{itemize}
+    \item Utiliser les structures de donn\'ees Redis : \texttt{LPUSH}, \texttt{RPUSH}, \texttt{LRANGE}, \texttt{LPOP}, \texttt{RPOP}
+    \item Impl\'ementer un syst\`eme de messagerie simple entre utilisateurs
+    \item G\'erer la persistance et l'expiration des messages
+    \item Simuler des \'echanges et visualiser les files d'attente
+\end{itemize}
+
+\subsection{Technologies utilis\'ees}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Technologie} & \textbf{Version} & \textbf{R\^ole} \\
+\hline
+Redis & 7 & Base de donn\'ees en m\'emoire \\
+Python & 3.14 & Logique applicative \\
+Docker Compose & 3.8 & Conteneurisation de Redis \\
+redis-py & 5.0.1 & Biblioth\`eque Python pour Redis \\
+\hline
+\end{tabular}
+\caption{Technologies utilis\'ees}
+\end{table}
+
+% ===================== 2. MODELISATION =====================
+\section{Mod\'elisation}
+
+\subsection{Choix de la structure de donn\'ees}
+
+Nous avons choisi les \textbf{Listes Redis} comme structure principale car elles offrent :
+\begin{itemize}
+    \item Un comportement natif de file d'attente (FIFO)
+    \item Des op\'erations O(1) pour l'insertion (\texttt{LPUSH}) et la lecture (\texttt{RPOP})
+    \item La possibilit\'e de consulter sans supprimer (\texttt{LRANGE})
+\end{itemize}
+
+\subsection{Convention de nommage des cl\'es}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Cl\'e Redis} & \textbf{Type} & \textbf{Usage} \\
+\hline
+\texttt{queue:<utilisateur>} & Liste & File de messages \\
+\texttt{stats:total\_messages} & String & Compteur global \\
+\texttt{stats:messages\_envoyes:<user>} & String & Messages envoy\'es par user \\
+\texttt{stats:messages\_recus:<user>} & String & Messages re\c{c}us par user \\
+\hline
+\end{tabular}
+\caption{Convention de nommage des cl\'es Redis}
+\end{table}
+
+\subsection{Format des messages}
+
+Chaque message est stock\'e sous forme de cha\^ine avec le format :
+
+\begin{lstlisting}
+<id_message>|<expediteur>|<timestamp>|<contenu>
+\end{lstlisting}
+
+Exemple :
+\begin{lstlisting}
+msg_1784407000469|momar|1784407000|Reunion d'equipe reporte a jeudi.
+\end{lstlisting}
+
+\subsection{Sch\'ema du flux de messages (FIFO)}
+
+Le principe FIFO est assur\'e par :
+\begin{itemize}
+    \item \texttt{LPUSH} : insertion en t\^ete de liste (\`a gauche)
+    \item \texttt{RPOP} : extraction en queue de liste (\`a droite)/ ou \texttt{LPOP} (a gauche)
+\end{itemize}
+
+Ainsi, le premier message envoy\'e est le premier lu (First In, First Out).
+
+
+
+% ===================== 3. INSTALLATION =====================
+\section{Installation et configuration}
+
+\subsection{Docker Compose}
+
+Le fichier \texttt{docker-compose.yml} d\'eploie une instance Redis 7 :
+
+\begin{lstlisting}[language=bash,caption={docker-compose.yml}]
+version: "3.8"
+services:
+  redis:
+    image: redis:7
+    container_name: redis-messagerie
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: ["redis-server", "--appendonly", "yes",
+              "--appendfsync", "everysec"]
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+\end{lstlisting}
+
+\subsection{Configuration Redis}
+
+\begin{itemize}
+    \item \textbf{Persistance AOF} activ\'ee (\texttt{--appendonly yes}) : chaque \'ecriture est journalis\'ee
+    \item \textbf{Synchronisation} : \texttt{appendfsync everysec} (compromis performance/s\'ecurit\'e)
+    \item \textbf{Volume Docker} : les donn\'ees survivent aux red\'emarrages du conteneur
+\end{itemize}
+
+\subsection{Environnement Python}
+
+\begin{lstlisting}[language=bash]
+python3 -m venv venv
+source venv/bin/activate.fish
+pip install -r requirements.txt   # redis==5.0.1
+\end{lstlisting}
+
+% ===================== 4. IMPLEMENTATION =====================
+\section{Impl\'ementation}
+
+\subsection{Architecture du projet}
+
+\begin{lstlisting}
+projet9-redis-messagerie/
+|-- app/
+|   |-- __init__.py         # Package Python
+|   |-- config.py           # Connexion Redis
+|   |-- messagerie.py       # Fonctions de gestion des files
+|   |-- main.py             # Interface console interactive
+|   +-- simulation.py       # Simulation automatique
+|-- docker-compose.yml
+|-- script_redis.sh
+|-- requirements.txt
++-- README.md
+\end{lstlisting}
+
+\subsection{Module \texttt{messagerie.py} -- Fonctions principales}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Fonction} & \textbf{Commande Redis} & \textbf{Description} \\
+\hline
+\texttt{envoyer\_message()} & LPUSH, INCR & Envoie un message \\
+\texttt{lire\_messages()} & LRANGE / RPOP & Lit les messages \\
+\texttt{lire\_message\_suivant()} & RPOP & Lit le plus ancien (FIFO) \\
+\texttt{compter\_messages()} & LLEN & Compte les messages \\
+\texttt{vider\_file()} & DEL & Supprime la file \\
+\texttt{definir\_expiration()} & EXPIRE & D\'efinit un TTL \\
+\texttt{obtenir\_ttl()} & TTL & Temps avant expiration \\
+\texttt{lister\_utilisateurs()} & KEYS & Files actives \\
+\texttt{obtenir\_statistiques()} & GET, LLEN, TTL & Vue d'ensemble \\
+\hline
+\end{tabular}
+\caption{Fonctions du module messagerie.py}
+\end{table}
+
+\subsection{Interface interactive (\texttt{main.py})}
+
+L'interface console offre 9 options :
+\begin{enumerate}
+    \item Envoyer un message
+    \item Lire mes messages (sans supprimer)
+    \item Lire le message suivant (supprime de la file)
+    \item Vider ma file de messages
+    \item D\'efinir un TTL sur ma file
+    \item Voir le TTL de ma file
+    \item Lister les utilisateurs actifs
+    \item Statistiques globales
+    \item Changer d'utilisateur
+\end{enumerate}
+
+\subsection{Simulateur (\texttt{simulation.py})}
+
+Le simulateur teste le syst\`eme avec 3 utilisateurs (\texttt{mamadou}, \texttt{ldji}, \texttt{momar}) :
+\begin{enumerate}
+    \item Envoi al\'eatoire de 20 messages
+    \item Lecture des messages de chaque utilisateur
+    \item D\'emonstration FIFO
+    \item D\'emonstration TTL (expiration)
+    \item Mesure des performances (1000 messages)
+    \item Statistiques globales
+    \item R\'einitialisation de la base
+\end{enumerate}
+
+% ===================== 5. DEMONSTRATION =====================
+\section{D\'emonstration}
+
+\subsection{Interface interactive}
+
+L'application se lance avec \texttt{python3 -m app.main}. L'utilisateur se connecte et acc\`ede au menu :
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{interface.png}
+\caption{Connexion en tant que \texttt{mamadou} et menu principal}
+\end{figure}
+
+\subsection{Envoi de messages (\texttt{LPUSH})}
+
+Les messages sont ins\'er\'es dans Redis avec la commande \texttt{LPUSH}. Le retour indique le nombre total d'\'el\'ements dans la liste apr\`es insertion :
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{envoi_sms.png}
+\caption{LPUSH de messages dans les files via redis-cli}
+\end{figure}
+
+\subsection{Files actives (\texttt{KEYS})}
+
+La commande \texttt{KEYS queue:*} affiche toutes les files existantes :
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\textwidth]{files_actives.png}
+\caption{\texttt{KEYS queue:*} -- 3 files actives (mamadou, ldji, momar)}
+\end{figure}
+
+\subsection{Lecture des messages (\texttt{LRANGE})}
+
+La commande \texttt{LRANGE queue:<user> 0 -1} affiche tous les messages d'une file sans les supprimer :
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{lire_sms.png}
+\caption{Contenu des files de mamadou et ldji avec LRANGE}
+\end{figure}
+
+\subsection{Lecture FIFO (\texttt{RPOP})}
+
+\texttt{RPOP} retire et retourne le message le plus ancien de la file (premier envoy\'e = premier lu) :
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{RPOP&LPOP.png}
+\caption{RPOP retire le message le plus ancien -- principe FIFO}
+\end{figure}
+
+\subsection{Expiration TTL (\texttt{EXPIRE} / \texttt{TTL})}
+
+On peut d\'efinir un d\'elai d'expiration sur une file. Apr\`es ce d\'elai, Redis supprime automatiquement la file et tous ses messages :
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{TTL.png}
+\caption{EXPIRE queue:momar 30 -- TTL d\'ecroissant. TTL queue:mamadou = -1 (permanent)}
+\end{figure}
+
+\subsection{Suppression d'une file (\texttt{DEL})}
+
+La commande \texttt{DEL} supprime imm\'ediatement une file et tous ses messages :
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\textwidth]{vider_file.png}
+\caption{DEL queue:momar puis LLEN = 0 (file vide)}
+\end{figure}
+
+\subsection{Statistiques (\texttt{INCR} / \texttt{GET})}
+
+Les compteurs sont incr\'ement\'es \`a chaque envoi avec \texttt{INCR} et consult\'es avec \texttt{GET} :
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{compteurs_Statistiques.png}
+\caption{Compteurs de statistiques avec SET, INCR et GET}
+\end{figure}
+
+\subsection{Informations syst\`eme (\texttt{INFO})}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{Info_Redis.png}
+\caption{DBSIZE = 11 cl\'es, INFO memory (1.43 Mo utilis\'es)}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\textwidth]{keyspace.png}
+\caption{INFO keyspace -- db0 : 11 cl\'es}
+\end{figure}
+
+\subsection{Simulation d'\'echanges automatiques}
+
+Le simulateur g\'en\`ere 20 messages al\'eatoires entre mamadou, ldji et momar :
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{20_sms_aleatoires.png}
+\caption{20 messages envoy\'es al\'eatoirement entre les 3 utilisateurs}
+\end{figure}
+
+\subsection{Monitoring temps r\'eel (\texttt{MONITOR})}
+
+La commande \texttt{MONITOR} affiche toutes les commandes Redis en direct pendant que l'application tourne dans un autre terminal :
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{Monitor.png}
+\caption{MONITOR : commandes Redis en direct pendant la simulation Python}
+\end{figure}
+
+% ===================== 6. PERFORMANCES =====================
+\section{Analyse des performances}
+
+\subsection{R\'esultats mesur\'es}
+
+Le test de performance (option 5 du simulateur) envoie et lit 1000 messages :
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{performances.png}
+\caption{Mesure des performances -- envoi et lecture de 1000 messages}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Op\'eration} & \textbf{Dur\'ee} & \textbf{D\'ebit} \\
+\hline
+Envoi de 1000 messages (LPUSH) & 0.326s & \textbf{3 065 msg/s} \\
+Lecture de 1000 messages (LRANGE) & 0.003s & \textbf{320 813 msg/s} \\
+Lecture FIFO de 1000 messages (RPOP) & 0.086s & \textbf{11 589 msg/s} \\
+\hline
+\end{tabular}
+\caption{R\'esultats du test de performances}
+\end{table}
+
+\subsection{Complexit\'e des op\'erations}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|c|l|}
+\hline
+\textbf{Op\'eration} & \textbf{Commande} & \textbf{Complexit\'e} & \textbf{Explication} \\
+\hline
+Envoi & LPUSH & O(1) & Temps constant \\
+Lecture FIFO & RPOP & O(1) & Temps constant \\
+Lecture compl\`ete & LRANGE & O(N) & Lin\'eaire \\
+Comptage & LLEN & O(1) & M\'etadonn\'ees \\
+Expiration & EXPIRE & O(1) & Timer interne \\
+Suppression & DEL & O(1) & Suppression cl\'e \\
+\hline
+\end{tabular}
+\caption{Complexit\'e des op\'erations Redis utilis\'ees}
+\end{table}
+
+\subsection{Analyse des r\'esultats}
+
+\begin{itemize}
+    \item \textbf{LPUSH (3 065 msg/s)} : le d\'ebit est limit\'e par le r\'eseau Python $\rightarrow$ Redis (TCP localhost) et les 3 commandes \texttt{INCR} suppl\'ementaires par message pour les statistiques.
+    \item \textbf{LRANGE (320 813 msg/s)} : extr\^emement rapide car c'est une seule commande qui retourne tous les messages en une fois. Les donn\'ees sont en m\'emoire.
+    \item \textbf{RPOP (11 589 msg/s)} : plus rapide que LPUSH car il n'y a pas d'INCR. Chaque RPOP est un aller-retour r\'eseau individuel.
+\end{itemize}
+
+\subsection{Avantages de Redis pour les files de messages}
+
+\begin{enumerate}
+    \item \textbf{Latence sub-milliseconde} : donn\'ees en m\'emoire, pas d'acc\`es disque
+    \item \textbf{Op\'erations atomiques} : LPUSH/RPOP sont thread-safe, pas de verrou n\'ecessaire
+    \item \textbf{TTL natif} : expiration automatique g\'er\'ee par Redis
+    \item \textbf{Persistance configurable} : AOF garantit la durabilit\'e sans sacrifier la performance
+    \item \textbf{Simplicit\'e} : pas de broker complexe (vs RabbitMQ/Kafka pour un cas simple)
+\end{enumerate}
+
+\subsection{Limites}
+
+\begin{enumerate}
+    \item \textbf{M\'emoire limit\'ee} : toutes les donn\'ees sont en RAM (1.43 Mo pour notre test)
+    \item \textbf{Pas de routage avanc\'e} : pas de topics, fanout, ou acknowledgement natif
+    \item \textbf{LRANGE O(N)} : la lecture de toute la file est lin\'eaire en taille
+    \item \textbf{Single-threaded} : Redis n'utilise qu'un seul c\oe ur CPU pour les commandes
+\end{enumerate}
+
+% ===================== 7. PERSISTANCE =====================
+\section{Gestion de la persistance}
+
+\subsection{Configuration AOF}
+
+Notre instance Redis est configur\'ee avec la persistance AOF (Append Only File) :
+
+\begin{lstlisting}
+redis-server --appendonly yes --appendfsync everysec
+\end{lstlisting}
+
+\begin{itemize}
+    \item \texttt{appendonly yes} : journalise chaque commande d'\'ecriture
+    \item \texttt{appendfsync everysec} : synchronise le fichier AOF chaque seconde
+\end{itemize}
+
+\subsection{Fonctionnement}
+
+\begin{enumerate}
+    \item Chaque commande d'\'ecriture (LPUSH, INCR, DEL, EXPIRE) est ajout\'ee au fichier AOF
+    \item En cas de red\'emarrage, Redis rejoue le fichier AOF pour restaurer l'\'etat exact
+    \item Le fichier est stock\'e dans le volume Docker \texttt{/data/appendonlydir/}
+\end{enumerate}
+
+\subsection{Compromis performance / durabilit\'e}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Mode} & \textbf{Perte maximale} & \textbf{Performance} \\
+\hline
+\texttt{appendfsync always} & 0 message & Plus lente \\
+\textbf{\texttt{appendfsync everysec}} & \textbf{$\sim$1 seconde} & \textbf{Bon compromis (notre choix)} \\
+\texttt{appendfsync no} & Variable (OS) & Plus rapide mais risqu\'ee \\
+\hline
+\end{tabular}
+\caption{Modes de synchronisation AOF}
+\end{table}
+
+\subsection{Sauvegarde et restauration}
+
+\begin{lstlisting}[language=bash]
+# Sauvegarde manuelle
+docker exec -it redis-messagerie redis-cli BGSAVE
+
+# Verifier les fichiers de persistance
+docker exec -it redis-messagerie ls -la /data/
+
+# Restauration automatique au redemarrage
+docker compose restart
+\end{lstlisting}
+
+Les donn\'ees sont conserv\'ees gr\^ace au volume Docker \texttt{redis-data}.
+
+% ===================== 8. CONCLUSION =====================
+\section{Conclusion}
+
+Ce projet nous a permis de mettre en \oe uvre un syst\`eme de messagerie fonctionnel bas\'e sur les listes Redis, exploitant le principe FIFO (LPUSH/RPOP) pour g\'erer les files d'attente entre utilisateurs. Les fonctionnalit\'es d'envoi, de lecture, d'expiration automatique (TTL) et de statistiques ont \'et\'e impl\'ement\'ees avec succ\`es, et les tests de performance confirment la rapidit\'e de Redis avec un d\'ebit de plus de 3~000 messages par seconde en \'ecriture et 320~000 en lecture. La persistance AOF garantit la durabilit\'e des donn\'ees sans compromettre les performances. Le syst\`eme reste cependant limit\'e \`a une utilisation en console sans authentification ni notifications en temps r\'eel, et pourrait \'evoluer vers une interface web avec Redis Pub/Sub ou Streams pour une exp\'erience plus compl\`ete.
+
+\end{document}
